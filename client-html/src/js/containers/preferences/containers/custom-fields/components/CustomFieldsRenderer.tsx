@@ -6,31 +6,26 @@
 import * as React from "react";
 import clsx from "clsx";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
-import { change, Field } from "redux-form";
-import {
- FormControlLabel, Grid, Button, Collapse, Card
-} from "@mui/material";
-import DragIndicator from "@mui/icons-material/DragIndicator";
+import { change } from "redux-form";
+import { FormControlLabel } from "@mui/material";
 import { CustomFieldType, DataType, EntityType } from "@api/model";
-import { CheckboxField, StyledCheckbox } from "../../../../../common/components/form/formFields/CheckboxField";
+import { CheckboxField } from "../../../../../common/components/form/formFields/CheckboxField";
 import EditInPlaceDateTimeField from "../../../../../common/components/form/formFields/EditInPlaceDateTimeField";
 import EditInPlaceField from "../../../../../common/components/form/formFields/EditInPlaceField";
 import EditInPlaceMoneyField from "../../../../../common/components/form/formFields/EditInPlaceMoneyField";
-import FormField from "../../../../../common/components/form/formFields/FormField";
-import {
-  validateEmail, validateSingleMandatoryField, validateURL, validateUniqueNamesInArray, validateRegex
-} from "../../../../../common/utils/validation";
+import { validateEmail, validateURL } from "../../../../../common/utils/validation";
 import { mapSelectItems, sortDefaultSelectItems } from "../../../../../common/utils/common";
 import ListMapRenderer from "./ListMapRenderer";
+import CustomField from "./CustomField";
 
-const EntityTypes = Object.keys(EntityType)
+export const EntityTypes = Object.keys(EntityType)
   .filter(val => isNaN(Number(val)))
   .map(mapSelectItems);
 
 EntityTypes.sort(sortDefaultSelectItems);
 
-const DataTypes = Object.keys(DataType)
-  .filter(val => !['Record', 'File', 'Message template'].includes(val))
+export const DataTypes = Object.keys(DataType)
+  .filter(val => !["Record", "File", "Message template"].includes(val))
   .map(mapSelectItems);
 
 DataTypes.sort(sortDefaultSelectItems);
@@ -98,7 +93,7 @@ const validateListMap = (value, dataType) => {
   return error;
 };
 
-const CustomFieldsResolver = React.memo<{ field: CustomFieldType & { uniqid: string }, classes: any }>(
+export const CustomFieldsResolver = React.memo<{ field: CustomFieldType & { uniqid: string }; classes: any }>(
   ({ classes, field, ...props }) => {
     switch (field.dataType) {
       case "Checkbox":
@@ -120,15 +115,15 @@ const CustomFieldsResolver = React.memo<{ field: CustomFieldType & { uniqid: str
       case "List":
         return (
           <ListMapRenderer
-            {...props as any}
+            {...(props as any)}
             dataType={field.dataType}
             key={field.id || field.uniqid}
             label="Options"
             onKeyPress={preventStarEnter}
           />
-      );
+        );
       case "Map":
-        return <ListMapRenderer {...props as any} dataType={field.dataType} key={field.id || field.uniqid} label="Options" />;
+        return <ListMapRenderer {...(props as any)} dataType={field.dataType} key={field.id || field.uniqid} label="Options" />;
       case "Money":
         return <EditInPlaceMoneyField {...props} />;
       case "URL":
@@ -136,12 +131,12 @@ const CustomFieldsResolver = React.memo<{ field: CustomFieldType & { uniqid: str
       default:
         return <EditInPlaceField {...props} />;
     }
-}
+  }
 );
 
-const validateResolver = (value, allValues, props, name) => {
+export const validateResolver = (value, allValues, _, name) => {
   const index = name.match(/\[(\d)]/);
-  const root = index && allValues.types[Number(index[1])] as CustomFieldType;
+  const root = index && (allValues.types[Number(index[1])] as CustomFieldType);
 
   if (!root) {
     return undefined;
@@ -162,7 +157,11 @@ const validateResolver = (value, allValues, props, name) => {
 
 const renderCustomFields = props => {
   const {
-    fields, classes, onDelete, dispatch, meta: { form }
+    fields,
+    classes,
+    onDelete,
+    dispatch,
+    meta: { form }
   } = props;
 
   const onAddOther = (index, checked) => {
@@ -181,157 +180,71 @@ const renderCustomFields = props => {
     dispatch(change(form, `${fields.name}[${index}].defaultValue`, value.length ? JSON.stringify(value) : null));
   };
 
+  const RowInVirtualList = props => {
+    const { index, style } = props;
+    const item = `${fields.name}[${index}]`;
+    const field: CustomFieldType = fields.get(index);
+
+    const isListOrMap = ["List", "Map"].includes(field.dataType);
+
+    const onDataTypeChange = () => {
+      dispatch(change(form, `${item}.defaultValue`, null));
+    };
+
+    return (
+      <Draggable key={index} draggableId={String(index + 1)} index={index}>
+        {provided => (
+          <CustomField
+            index={index}
+            provided={provided}
+            classes={classes}
+            item={item}
+            field={field}
+            onDataTypeChange={onDataTypeChange}
+            onDelete={onDelete}
+            onAddOther={onAddOther}
+            isListOrMap={isListOrMap}
+            style={style}
+          />
+        )}
+      </Draggable>
+    );
+  };
+
+  const RowInFieldsMap = (item: string, index: number, fields): JSX.Element => {
+    const field: CustomFieldType = fields.get(index);
+
+    const isListOrMap = ["List", "Map"].includes(field.dataType);
+
+    const onDataTypeChange = () => {
+      dispatch(change(form, `${item}.defaultValue`, null));
+    };
+
+    return (
+      <Draggable key={index} draggableId={String(index + 1)} index={index}>
+        {provided => (
+          <CustomField
+            index={index}
+            provided={provided}
+            classes={classes}
+            item={item}
+            field={field}
+            onDataTypeChange={onDataTypeChange}
+            onDelete={onDelete}
+            onAddOther={onAddOther}
+            isListOrMap={isListOrMap}
+          />
+        )}
+      </Draggable>
+    );
+  };
+
   return (
     <DragDropContext onDragEnd={result => onDragEnd(result, fields.getAll(), dispatch)}>
       <Droppable droppableId="droppableCustomFields">
         {provided => (
           <div ref={provided.innerRef} className={classes.container}>
-            {fields.map((item: string, index) => {
-              const field: CustomFieldType = fields.get(index);
-
-              const isListOrMap = ["List", "Map"].includes(field.dataType);
-
-              const onDataTypeChange = () => {
-                dispatch(change(form, `${item}.defaultValue`, null));
-              };
-
-              return (
-                <Draggable key={index} draggableId={String(index + 1)} index={index}>
-                  {provided => (
-                    <div id={`custom-field-${index}`} key={index} ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
-                      <Card className="card d-flex">
-                        <div className="centeredFlex mr-2">
-                          <DragIndicator className={clsx("dndActionIcon", classes.dragIcon)} />
-                        </div>
-
-                        <Grid container columnSpacing={3} spacing={2} className="relative">
-                          <Grid item xs={12}>
-                            <Grid container columnSpacing={3}>
-                              <Grid item xs={3}>
-                                <FormField
-                                  type="text"
-                                  name={`${item}.name`}
-                                  label="Name"
-                                  fullWidth
-                                  className={classes.field}
-                                  validate={[validateSingleMandatoryField, validateUniqueNamesInArray]}
-                                />
-                              </Grid>
-
-                              <Grid item xs={4}>
-                                <FormField
-                                  type="text"
-                                  name={`${item}.fieldKey`}
-                                  label="Custom field key"
-                                  fullWidth
-                                  disabled={field.id}
-                                  className={classes.field}
-                                  required
-                                />
-                              </Grid>
-
-                              <Grid item xs={4}>
-                                <FormField
-                                  type="select"
-                                  name={`${item}.dataType`}
-                                  label="Data Type"
-                                  items={DataTypes}
-                                  disabled={field.id}
-                                  onChange={onDataTypeChange}
-                                  className={classes.field}
-                                  fullWidth
-                                  required
-                                />
-                              </Grid>
-
-                              <Grid item xs={1}>
-                                <Button
-                                  size="small"
-                                  classes={{
-                                    root: classes.deleteButton
-                                  }}
-                                  onClick={() => onDelete(field, index)}
-                                >
-                                  Delete
-                                </Button>
-                              </Grid>
-
-                              <Grid item xs={3}>
-                                <FormField
-                                  type="select"
-                                  name={`${item}.entityType`}
-                                  label="Record Type"
-                                  items={EntityTypes}
-                                  disabled={field.id}
-                                  className={classes.field}
-                                  fullWidth
-                                  required
-                                />
-                              </Grid>
-
-                              <Grid item xs={4}>
-                                <FormControlLabel
-                                  className={classes.checkbox}
-                                  control={(
-                                    <FormField
-                                      type="checkbox"
-                                      name={`${item}.mandatory`}
-                                      color="primary"
-                                      value="true"
-                                      fullWidth
-                                    />
-                                  )}
-                                  label="Mandatory"
-                                />
-
-                                {field.dataType === "List" && (
-                                  <FormControlLabel
-                                    className={classes.checkbox}
-                                    control={(
-                                      <StyledCheckbox
-                                        checked={field.defaultValue && field.defaultValue.includes("*")}
-                                        onChange={(e, checked) => onAddOther(index, checked)}
-                                        color="primary"
-                                      />
-                                    )}
-                                    label="Add 'other' option"
-                                  />
-                                )}
-                              </Grid>
-
-                              <Grid item xs={5}>
-                                <Collapse in={isListOrMap} mountOnEnter unmountOnExit>
-                                  <Field
-                                    name={`${item}.defaultValue`}
-                                    label="Default value"
-                                    field={field}
-                                    component={CustomFieldsResolver}
-                                    className={classes.field}
-                                    classes={classes}
-                                    validate={validateResolver}
-                                  />
-                                </Collapse>
-                                <Collapse in={field.dataType === "Pattern text"} mountOnEnter unmountOnExit>
-                                  <FormField
-                                    type="text"
-                                    name={`${item}.pattern`}
-                                    label="Pattern"
-                                    disabled={field.id}
-                                    className={classes.field}
-                                    validate={validateRegex}
-                                    required
-                                  />
-                                </Collapse>
-                              </Grid>
-                            </Grid>
-                          </Grid>
-                        </Grid>
-                      </Card>
-                    </div>
-                  )}
-                </Draggable>
-              );
-            })}
+            {fields.map(RowInFieldsMap)}
             {provided.placeholder}
           </div>
         )}
