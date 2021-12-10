@@ -6,48 +6,37 @@ import DragIndicator from "@mui/icons-material/DragIndicator";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 
-export const TagItemRenderer = ({
-  snapshot,
-  provided,
-  noTransformClass,
-  classes,
-  item,
-  onEditClick,
-  onDeleteClick,
-}) => {
+type Props = {
+  snapshot: any;
+  provided: any;
+  noTransformClass: any;
+  classes: any;
+  item: any;
+  onEditClick?: any;
+  onDeleteClick?: any;
+};
+
+export const TagItemRenderer = ({ snapshot, provided, noTransformClass, classes, item, onEditClick, onDeleteClick }: Props) => {
   const isDragging = snapshot.isDragging;
 
   return (
-    <div
-      ref={provided.innerRef}
-      {...provided.draggableProps}
-      {...provided.dragHandleProps}
-      className={noTransformClass}
-    >
+    <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className={noTransformClass}>
       <div
-        className={clsx(
-          "cursor-pointer d-grid align-items-center",
-          classes.card,
-          {
-            [clsx("paperBackgroundColor", classes.dragOver)]:
-              isDragging || Boolean(snapshot.combineTargetFor),
-          }
-        )}
+        className={clsx("cursor-pointer d-grid align-items-center", classes.card, {
+          [clsx("paperBackgroundColor", classes.dragOver)]: isDragging || Boolean(snapshot.combineTargetFor)
+        })}
       >
         <div>
           <DragIndicator
             className={clsx({
               dndActionIcon: true,
-              [clsx("d-flex", classes.dragIcon)]: true,
+              [clsx("d-flex", classes.dragIcon)]: true
             })}
           />
         </div>
 
         <div className="pr-2">
-          <div
-            className={classes.tagColorDot}
-            style={{ background: "#" + item.color }}
-          />
+          <div className={classes.tagColorDot} style={{ background: "#" + item.color }} />
         </div>
 
         <div>
@@ -56,11 +45,7 @@ export const TagItemRenderer = ({
               Name
             </Typography>
 
-            <Typography
-              variant="body2"
-              color={item.name ? undefined : "error"}
-              noWrap
-            >
+            <Typography variant="body2" color={item.name ? undefined : "error"} noWrap>
               {item.name || "Name is mandatory"}
             </Typography>
           </div>
@@ -72,11 +57,7 @@ export const TagItemRenderer = ({
               URL path
             </Typography>
 
-            <Typography
-              variant="body2"
-              className={item.urlPath ? undefined : "placeholderContent"}
-              noWrap
-            >
+            <Typography variant="body2" className={item.urlPath ? undefined : "placeholderContent"} noWrap>
               {item.urlPath || "No Value"}
             </Typography>
           </div>
@@ -90,17 +71,14 @@ export const TagItemRenderer = ({
           </div>
         </div>
 
-        <IconButton
-          className={clsx(classes.actionButton, "dndActionIconButton")}
-          onClick={onEditClick}
-        >
+        <IconButton className={clsx(classes.actionButton, "dndActionIconButton")} onClick={onEditClick}>
           <Edit className={clsx(classes.actionIcon, "dndActionIcon")} />
         </IconButton>
 
         <IconButton
           className={clsx(classes.actionButton, {
             invisible: !parent,
-            dndActionIconButton: true,
+            dndActionIconButton: true
           })}
           onClick={onDeleteClick}
         >

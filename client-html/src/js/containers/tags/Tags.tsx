@@ -69,7 +69,7 @@ class Tags extends React.Component<any, any> {
 
     const isNew = id === "new";
 
-    const currentTag = isNew ? emptyTag : tags && tags.find(i => i.id.toString() === id);
+    const currentTag = isNew ? emptyTag : tags?.find(i => i.id.toString() === id);
 
     return currentTag ? (
       <Content>
@@ -80,12 +80,9 @@ class Tags extends React.Component<any, any> {
 }
 
 const mapStateToProps = (state: State) => ({
-  form: state.form.TagsForm && state.form.TagsForm.values && state.form.TagsForm.values.name,
-  submitSucceeded: state.form.TagsForm && state.form.TagsForm.submitSucceeded,
+  form: state.form.TagsForm?.values?.name,
+  submitSucceeded: state.form.TagsForm?.submitSucceeded,
   tags: state.tags.allTags
 });
 
-export default connect<any, any, any>(
-  mapStateToProps,
-  null
-)(withTheme(Tags));
+export default connect<any, any, any>(mapStateToProps, null)(withTheme(Tags));

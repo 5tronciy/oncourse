@@ -10,9 +10,9 @@ import Divider from "@mui/material/Divider";
 import { withRouter } from "react-router";
 import DeleteForever from "@mui/icons-material/DeleteForever";
 import { DragDropContext, Droppable } from "react-beautiful-dnd";
-import {
-  Form, Field, initialize, change, arrayRemove, reduxForm, getFormValues
-} from "redux-form";
+import { VariableSizeList as List } from "react-window";
+import AutoSizer from "react-virtualized-auto-sizer";
+import { Form, Field, initialize, change, arrayRemove, reduxForm, getFormValues } from "redux-form";
 import { connect } from "react-redux";
 import { Dispatch } from "redux";
 import { ForbiddenTagNames, Tag } from "@api/model";
@@ -25,9 +25,7 @@ import RouteChangeConfirm from "../../../common/components/dialog/confirm/RouteC
 import TagRequirementsMenu from "../components/TagRequirementsMenu";
 import TagItem from "../components/TagItem";
 import { getDeepValue } from "../../../common/utils/common";
-import {
-  createTag, deleteTag, updateTag, updateTagEditViewState
-} from "../actions";
+import { createTag, deleteTag, updateTag, updateTagEditViewState } from "../actions";
 import AppBarActions from "../../../common/components/form/AppBarActions";
 import TagRequirementItem from "../components/TagRequirementItem";
 import { getManualLink } from "../../../common/utils/getManualLink";
@@ -38,6 +36,7 @@ import { ShowConfirmCaller } from "../../../model/common/Confirm";
 import AddIcon from "../../../common/components/icons/AddIcon";
 import { onSubmitFail } from "../../../common/utils/highlightFormClassErrors";
 import FormSubmitButton from "src/js/common/components/form/FormSubmitButton";
+import { TagItemRenderer } from "../components/TagItemRenderer";
 
 const styles = () => ({
   noTransform: {
@@ -167,9 +166,7 @@ class TagsFormBase extends React.PureComponent<FormProps, any> {
   }
 
   componentDidUpdate(prevProps) {
-    const {
- rootTag, submitSucceeded, fetch, nextLocation, setNextLocation, dirty, history
-} = this.props;
+    const { rootTag, submitSucceeded, fetch, nextLocation, setNextLocation, dirty, history } = this.props;
 
     if (rootTag && (!prevProps.rootTag || prevProps.rootTag.id !== rootTag.id || submitSucceeded)) {
       setDragIndex(getAllTags([rootTag]));
@@ -188,14 +185,14 @@ class TagsFormBase extends React.PureComponent<FormProps, any> {
 
     if (nextLocation && !dirty && !this.isPending) {
       history.push(nextLocation);
-      setNextLocation('');
+      setNextLocation("");
     }
   }
 
   onSave = values => {
     const { onUpdate, onCreate, isNew } = this.props;
 
-    const clone = JSON.parse(JSON.stringify(values));
+    const clone = Object.assign({}, values);
 
     if (!clone.weight) clone.weight = 1;
 
@@ -247,31 +244,21 @@ class TagsFormBase extends React.PureComponent<FormProps, any> {
           : combine.draggableId
         : getPathByDragIndex(destination.index, values.childTags);
 
-      if (
-        destinationPath.length > draggableId.length
-        && checkParentDrop(values, destinationPath, getDeepValue(values, draggableId).id)
-      ) {
+      if (destinationPath.length > draggableId.length && checkParentDrop(values, destinationPath, getDeepValue(values, draggableId).id)) {
         // parent dropped inside itself or children
         return;
       }
 
-      if (
-        !combine
-        && destinationPath.replace(/childTags\[[0-9]+]$/, "") !== draggableId.replace(/childTags\[[0-9]+]$/, "")
-      ) {
+      if (!combine && destinationPath.replace(/childTags\[[0-9]+]$/, "") !== draggableId.replace(/childTags\[[0-9]+]$/, "")) {
         // dropped inside different parent
         return;
       }
 
-      const clone = JSON.parse(JSON.stringify(values));
+      const clone = Object.assign({}, values);
 
       const insertPath = getDeepValue(
         clone,
-        combine
-          ? destinationPath
-            ? destinationPath + ".childTags"
-            : "childTags"
-          : destinationPath.replace(/\[[0-9]+]$/, "")
+        combine ? (destinationPath ? destinationPath + ".childTags" : "childTags") : destinationPath.replace(/\[[0-9]+]$/, "")
       );
 
       const insertValue = getDeepValue(clone, draggableId);
@@ -320,12 +307,12 @@ class TagsFormBase extends React.PureComponent<FormProps, any> {
       modified: null,
       requirements: [],
       childTags: [],
-      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      color: COLORS[Math.floor(Math.random() * COLORS.length)]
     };
 
-    const clone = JSON.parse(JSON.stringify(values));
+    const clone = Object.assign({}, values);
 
-    clone && clone.childTags && clone.childTags.splice(0, 0, newTag);
+    clone?.childTags?.splice(0, 0, newTag);
 
     setDragIndex(getAllTags([clone]));
 
@@ -345,7 +332,7 @@ class TagsFormBase extends React.PureComponent<FormProps, any> {
       : "You are about to delete tag. After saving the records it cannot be undone";
 
     const onConfirm = () => {
-      const clone = JSON.parse(JSON.stringify(values));
+      const clone = Object.assign({}, values);
 
       const removePath = getDeepValue(clone, parent.replace(/\[[0-9]+]$/, ""));
 
@@ -482,10 +469,7 @@ class TagsFormBase extends React.PureComponent<FormProps, any> {
                   manualUrl={manualUrl}
                 />
 
-                <FormSubmitButton
-                  disabled={!dirty}
-                  invalid={invalid}
-                />
+                <FormSubmitButton disabled={!dirty} invalid={invalid} />
               </Grid>
             </Grid>
           </CustomAppBar>
@@ -508,8 +492,8 @@ class TagsFormBase extends React.PureComponent<FormProps, any> {
                     )}
                   </div>
 
-                  {values
-                    && values.requirements.map((i, index) => (
+                  {values &&
+                    values.requirements.map((i, index) => (
                       <TagRequirementItem
                         parent={`requirements[${index}]`}
                         key={index}
@@ -534,8 +518,24 @@ class TagsFormBase extends React.PureComponent<FormProps, any> {
               </div>
 
               <DragDropContext onDragEnd={this.onDragEnd}>
-                <Droppable droppableId="ROOT" isCombineEnabled>
+                <Droppable
+                  droppableId="ROOT"
+                  isCombineEnabled
+                  // mode="virtual"
+                  // renderClone={(provided, snapshot, rubric) => (
+                  //   <TagItemRenderer
+                  //     snapshot={snapshot}
+                  //     provided={provided}
+                  //     noTransformClass={classes.noTransform}
+                  //     classes={classes}
+                  //     item={values}
+                  //   />
+                  // )}
+                >
                   {provided => (
+                    // <List height={700} itemCount={values.length} itemSize={50} width={700} outerRef={provided.innerRef} itemData={values}>
+                    //   {TagItem}
+                    // </List>
                     <div ref={provided.innerRef}>
                       {values && (
                         <TagItem
@@ -570,7 +570,7 @@ class TagsFormBase extends React.PureComponent<FormProps, any> {
 const mapStateToProps = (state: State) => ({
   values: getFormValues("TagsForm")(state),
   fetch: state.fetch,
-  nextLocation: state.nextLocation,
+  nextLocation: state.nextLocation
 });
 
 const mapDispatchToProps = (dispatch: Dispatch<any>) => ({
@@ -580,7 +580,7 @@ const mapDispatchToProps = (dispatch: Dispatch<any>) => ({
   openTagEditView: (item: Tag, parent: string) => dispatch(updateTagEditViewState(item, true, parent)),
   closeTagEditView: () => dispatch(updateTagEditViewState({}, false, null)),
   openConfirm: props => dispatch(showConfirm(props)),
-  setNextLocation: (nextLocation: string) => dispatch(setNextLocation(nextLocation)),
+  setNextLocation: (nextLocation: string) => dispatch(setNextLocation(nextLocation))
 });
 
 const TagsForm = reduxForm({
