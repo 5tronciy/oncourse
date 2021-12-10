@@ -6,6 +6,7 @@
 import * as React from "react";
 import clsx from "clsx";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import { FixedSizeList as List } from "react-window";
 import { change } from "redux-form";
 import { FormControlLabel } from "@mui/material";
 import { CustomFieldType, DataType, EntityType } from "@api/model";
@@ -241,12 +242,17 @@ const renderCustomFields = props => {
 
   return (
     <DragDropContext onDragEnd={result => onDragEnd(result, fields.getAll(), dispatch)}>
-      <Droppable droppableId="droppableCustomFields">
+      <Droppable
+        droppableId="droppableCustomFields"
+        mode="virtual"
+        renderClone={(provided, rubric) => (
+          <CustomField index={rubric.source.index} provided={provided} classes={classes} item={`${fields.name}[${rubric.source.index}]`} />
+        )}
+      >
         {provided => (
-          <div ref={provided.innerRef} className={classes.container}>
-            {fields.map(RowInFieldsMap)}
-            {provided.placeholder}
-          </div>
+          <List height={700} itemCount={fields.length} itemSize={162} width={"100%"} outerRef={provided.innerRef}>
+            {RowInVirtualList}
+          </List>
         )}
       </Droppable>
     </DragDropContext>
