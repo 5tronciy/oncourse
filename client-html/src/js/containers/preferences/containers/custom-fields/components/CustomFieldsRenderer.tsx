@@ -45,32 +45,6 @@ const preventStarEnter = e => {
   }
 };
 
-const onDragEnd = (result, items, dispatch) => {
-  // dropped outside the list
-  if (!result.destination) {
-    return;
-  }
-
-  // dropped on the same position
-  if (result.source.index === result.destination.index) {
-    return;
-  }
-
-  const reordered = reorder(items, result.source.index, result.destination.index);
-
-  dispatch(change("CustomFieldsForm", "types", reordered));
-
-  setTimeout(
-    () =>
-      reordered.forEach((item: CustomFieldType, index: number) => {
-        if (item.sortOrder !== index) {
-          dispatch(change("CustomFieldsForm", `types[${index}].sortOrder`, index));
-        }
-      }),
-    500
-  );
-};
-
 const validateListMap = (value, dataType) => {
   let error;
   let fields = [];
@@ -165,6 +139,32 @@ const renderCustomFields = props => {
     meta: { form }
   } = props;
 
+  const onDragEnd = result => {
+    if (!result.destination) {
+      return;
+    }
+
+    if (result.source.index === result.destination.index) {
+      return;
+    }
+
+    const items = fields.getAll();
+
+    const reordered = reorder(items, result.source.index, result.destination.index);
+
+    dispatch(change("CustomFieldsForm", "types", reordered));
+
+    setTimeout(
+      () =>
+        reordered.forEach((item: CustomFieldType, index: number) => {
+          if (item.sortOrder !== index) {
+            dispatch(change("CustomFieldsForm", `types[${index}].sortOrder`, index));
+          }
+        }),
+      500
+    );
+  };
+
   const onAddOther = (index, checked) => {
     const field = fields.get(index);
     const value = field.defaultValue ? JSON.parse(field.defaultValue) : [];
@@ -181,7 +181,7 @@ const renderCustomFields = props => {
     dispatch(change(form, `${fields.name}[${index}].defaultValue`, value.length ? JSON.stringify(value) : null));
   };
 
-  const RowInVirtualList = props => {
+  const Row = props => {
     const { index, style } = props;
     const item = `${fields.name}[${index}]`;
     const field: CustomFieldType = fields.get(index);
@@ -212,46 +212,24 @@ const renderCustomFields = props => {
     );
   };
 
-  const RowInFieldsMap = (item: string, index: number, fields): JSX.Element => {
-    const field: CustomFieldType = fields.get(index);
-
-    const isListOrMap = ["List", "Map"].includes(field.dataType);
-
-    const onDataTypeChange = () => {
-      dispatch(change(form, `${item}.defaultValue`, null));
-    };
-
-    return (
-      <Draggable key={index} draggableId={String(index + 1)} index={index}>
-        {provided => (
-          <CustomField
-            index={index}
-            provided={provided}
-            classes={classes}
-            item={item}
-            field={field}
-            onDataTypeChange={onDataTypeChange}
-            onDelete={onDelete}
-            onAddOther={onAddOther}
-            isListOrMap={isListOrMap}
-          />
-        )}
-      </Draggable>
-    );
-  };
-
   return (
-    <DragDropContext onDragEnd={result => onDragEnd(result, fields.getAll(), dispatch)}>
+    <DragDropContext onDragEnd={onDragEnd}>
       <Droppable
         droppableId="droppableCustomFields"
         mode="virtual"
-        renderClone={(provided, rubric) => (
-          <CustomField index={rubric.source.index} provided={provided} classes={classes} item={`${fields.name}[${rubric.source.index}]`} />
+        renderClone={(provided, _, rubric) => (
+          <CustomField
+            index={rubric.source.index}
+            provided={provided}
+            classes={classes}
+            item={`${fields.name}[${rubric.source.index}]`}
+            field={fields.get(rubric.source.index)}
+          />
         )}
       >
         {provided => (
           <List height={700} itemCount={fields.length} itemSize={162} width={"100%"} outerRef={provided.innerRef}>
-            {RowInVirtualList}
+            {Row}
           </List>
         )}
       </Droppable>

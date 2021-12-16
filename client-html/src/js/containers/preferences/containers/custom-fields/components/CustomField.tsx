@@ -15,7 +15,7 @@ type Props = {
   provided: DraggableProvided;
   classes: any;
   item: string;
-  field?: CustomFieldType;
+  field: CustomFieldType;
   onDataTypeChange?: () => void;
   onDelete?: (item, index) => void;
   onAddOther?: (index: number, checked: any) => void;
@@ -26,12 +26,12 @@ type Props = {
 const CustomField = ({ index, provided, classes, item, field, onDataTypeChange, onDelete, onAddOther, isListOrMap, style }: Props) => {
   return (
     <div
+      {...provided.draggableProps}
+      {...provided.dragHandleProps}
       id={`custom-field-${index}`}
       key={index}
       ref={provided.innerRef}
       style={{ ...style, ...provided.draggableProps.style }}
-      {...provided.draggableProps}
-      {...provided.dragHandleProps}
     >
       <Card className="card d-flex">
         <div className="centeredFlex mr-2">
