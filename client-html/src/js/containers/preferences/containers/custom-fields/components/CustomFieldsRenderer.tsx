@@ -228,7 +228,14 @@ const renderCustomFields = props => {
         )}
       >
         {provided => (
-          <List height={700} itemCount={fields.length} itemSize={162} width={"100%"} outerRef={provided.innerRef}>
+          <List
+            height={700}
+            itemCount={fields.length}
+            itemSize={162}
+            width={"100%"}
+            style={{ minWidth: "800px" }}
+            outerRef={provided.innerRef}
+          >
             {Row}
           </List>
         )}
