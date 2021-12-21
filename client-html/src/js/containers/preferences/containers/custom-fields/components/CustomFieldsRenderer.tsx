@@ -15,9 +15,13 @@ import EditInPlaceDateTimeField from "../../../../../common/components/form/form
 import EditInPlaceField from "../../../../../common/components/form/formFields/EditInPlaceField";
 import EditInPlaceMoneyField from "../../../../../common/components/form/formFields/EditInPlaceMoneyField";
 import { validateEmail, validateURL } from "../../../../../common/utils/validation";
-import { mapSelectItems, sortDefaultSelectItems } from "../../../../../common/utils/common";
+import { getWindowHeight, mapSelectItems, sortDefaultSelectItems } from "../../../../../common/utils/common";
 import ListMapRenderer from "./ListMapRenderer";
 import CustomField from "./CustomField";
+
+const HEADER_HEIGHT = 64;
+const CONTENT_PADDING = 24;
+const GRID_MARGIN = 20;
 
 export const EntityTypes = Object.keys(EntityType)
   .filter(val => isNaN(Number(val)))
@@ -229,7 +233,7 @@ const renderCustomFields = props => {
       >
         {provided => (
           <List
-            height={700}
+            height={getWindowHeight() - HEADER_HEIGHT - 2 * CONTENT_PADDING - GRID_MARGIN}
             itemCount={fields.length}
             itemSize={162}
             width={"100%"}
