@@ -1,4 +1,5 @@
 import * as React from "react";
+import { memo } from "react";
 import clsx from "clsx";
 import { Field } from "redux-form";
 import { FormControlLabel, Grid, Button, Collapse, Card } from "@mui/material";
@@ -23,7 +24,7 @@ type Props = {
   style?: Object;
 };
 
-const CustomField = ({ index, provided, classes, item, field, onDataTypeChange, onDelete, onAddOther, isListOrMap, style }: Props) => {
+const CustomField = memo<Props>(({ index, provided, classes, item, field, onDataTypeChange, onDelete, onAddOther, isListOrMap, style }) => {
   return (
     <div
       {...provided.draggableProps}
@@ -116,7 +117,7 @@ const CustomField = ({ index, provided, classes, item, field, onDataTypeChange, 
                     control={
                       <StyledCheckbox
                         checked={field.defaultValue && field.defaultValue.includes("*")}
-                        onChange={(e, checked) => onAddOther(index, checked)}
+                        onChange={(_, checked) => onAddOther(index, checked)}
                         color="primary"
                       />
                     }
@@ -155,6 +156,6 @@ const CustomField = ({ index, provided, classes, item, field, onDataTypeChange, 
       </Card>
     </div>
   );
-};
+});
 
 export default CustomField;

@@ -4,66 +4,56 @@
  */
 
 import * as React from "react";
-import { connect } from "react-redux";
-import { Dispatch } from "redux";
+import { useEffect, useCallback } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { getFormValues } from "redux-form";
 import { CustomFieldType } from "@api/model";
-import { updateCustomFields, deleteCustomField, getCustomFields } from "../../actions";
+import { getCustomFields } from "../../actions";
 import { State } from "../../../../reducers/state";
 import { Fetch } from "../../../../model/common/Fetch";
 import CustomFieldsForm from "./components/CustomFieldsForm";
 import getTimestamps from "../../../../common/utils/timestamps/getTimestamps";
 
-interface Props {
-  getFields: () => void;
-  updateCustomFields: (customFields: CustomFieldType[]) => void;
-  deleteCustomField: (id: string) => void;
-  customFields: CustomFieldType[];
-  data: CustomFieldType[];
-  timestamps: Date[];
-  fetch: Fetch;
-}
+const CustomFields = () => {
+  useEffect(() => {
+    getFields();
+  }, []);
 
-class CustomFields extends React.Component<Props, any> {
-  componentDidMount() {
-    this.props.getFields();
-  }
+  const customFields: CustomFieldType[] = useSelector((state: State) => state.preferences.customFields);
 
-  render() {
-    const {
-      customFields, data, updateCustomFields, deleteCustomField, fetch, timestamps
-    } = this.props;
+  const fetch: Fetch = useSelector((state: State) => state.fetch);
 
-    const created = timestamps && timestamps[0];
-    const modified = timestamps && timestamps[1];
+  const data = useSelector((state: State) => getFormValues("CustomFieldsForm")(state));
 
-    const form = <CustomFieldsForm />;
+  const timestamps: Date[] = useSelector((state: State) => state.preferences.customFields && getTimestamps(state.preferences.customFields));
 
-    const componentForm = React.cloneElement(form, {
-      created,
-      modified,
-      customFields,
-      data,
-      fetch,
-      onUpdate: updateCustomFields,
-      onDelete: deleteCustomField
-    });
+  const dispatch = useDispatch();
 
-    return <div>{customFields && componentForm}</div>;
-  }
-}
+  const getFields: () => void = useCallback(() => dispatch(getCustomFields()), []);
 
-const mapStateToProps = (state: State) => ({
-  data: getFormValues("CustomFieldsForm")(state),
-  customFields: state.preferences.customFields,
-  timestamps: state.preferences.customFields && getTimestamps(state.preferences.customFields),
-  fetch: state.fetch
-});
+  const updateCustomFields: (customFields: CustomFieldType[]) => void = useCallback(
+    (customFields: CustomFieldType[]): void => dispatch(updateCustomFields(customFields)),
+    []
+  );
 
-const mapDispatchToProps = (dispatch: Dispatch<any>) => ({
-  getFields: () => dispatch(getCustomFields()),
-  updateCustomFields: (customFields: CustomFieldType[]) => dispatch(updateCustomFields(customFields)),
-  deleteCustomField: (id: string) => dispatch(deleteCustomField(id))
-});
+  const deleteCustomField: (id: string) => void = useCallback((id: string) => dispatch(deleteCustomField(id)), []);
 
-export default connect<any, any, any>(mapStateToProps, mapDispatchToProps)(CustomFields);
+  const created = timestamps && timestamps[0];
+  const modified = timestamps && timestamps[1];
+
+  const form = <CustomFieldsForm />;
+
+  const componentForm = React.cloneElement(form, {
+    created,
+    modified,
+    customFields,
+    data,
+    fetch,
+    onUpdate: updateCustomFields,
+    onDelete: deleteCustomField
+  });
+
+  return <div>{customFields && componentForm}</div>;
+};
+
+export default CustomFields;
