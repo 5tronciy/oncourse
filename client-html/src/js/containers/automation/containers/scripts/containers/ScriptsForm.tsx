@@ -4,17 +4,17 @@
  */
 
 import FileCopy from "@mui/icons-material/FileCopy";
-import React, { useCallback, useEffect, useMemo, useState, } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import clsx from "clsx";
 import Grid from "@mui/material/Grid";
 import { withStyles } from "@mui/styles";
-import { arrayInsert, change, FieldArray, Form, initialize, } from "redux-form";
+import { arrayInsert, change, FieldArray, Form, initialize } from "redux-form";
 import Typography from "@mui/material/Typography";
 import { OutputType, Script, TriggerType } from "@api/model";
 import createStyles from "@mui/styles/createStyles";
 import DeleteForever from "@mui/icons-material/DeleteForever";
-import ViewAgendaIcon from '@mui/icons-material/ViewAgenda';
-import CodeIcon from '@mui/icons-material/Code';
+import ViewAgendaIcon from "@mui/icons-material/ViewAgenda";
+import CodeIcon from "@mui/icons-material/Code";
 import FormField from "../../../../../common/components/form/formFields/FormField";
 import FormSubmitButton from "../../../../../common/components/form/FormSubmitButton";
 import CustomAppBar from "../../../../../common/components/layout/CustomAppBar";
@@ -34,7 +34,7 @@ import { setScriptComponents } from "../actions";
 import { ScriptComponentType, ScriptViewMode } from "../../../../../model/scripts";
 import CardsRenderer from "../components/cards/CardsRenderer";
 import { getManualLink } from "../../../../../common/utils/getManualLink";
-import { getMessageComponent, getQueryComponent, getReportComponent, getScriptComponent, } from "../constants";
+import { getMessageComponent, getQueryComponent, getReportComponent, getScriptComponent } from "../constants";
 import { DD_MMM_YYYY_AT_HH_MM_AAAA_SPECIAL } from "../../../../../common/utils/dates/format";
 import AppBarActions from "../../../../../common/components/form/AppBarActions";
 import RouteChangeConfirm from "../../../../../common/components/dialog/confirm/RouteChangeConfirm";
@@ -47,65 +47,67 @@ const getAuditsUrl = (id: number) => `audit?search=~"Script" and entityId == ${i
 const styles = theme =>
   createStyles({
     root: {
-      padding: theme.spacing(0, 9),
+      padding: theme.spacing(0, 9)
     },
     divider: {
-      margin: "20px 0",
+      margin: "20px 0"
     },
     checkbox: {
       height: "50px",
-      display: "flex",
+      display: "flex"
     },
     cardsBox: {
-      padding: theme.spacing(0, 3, 3, 0),
+      padding: theme.spacing(0, 3, 3, 0)
     },
     deleteButtonContainer: {
-      display: "flex",
+      display: "flex"
     },
     deleteButton: {
       right: "-8px",
-      top: "-8px",
+      top: "-8px"
     },
     cardContent: {
-      height: "120px",
+      height: "120px"
     },
     getBackIcon: {
       color: "#fff",
-      transform: "rotate(180deg)",
+      transform: "rotate(180deg)"
     },
     dragging: {
       borderRadius: "4px",
       width: "55px",
       paddingLeft: "4px",
       height: "25px",
-      background: "#fff",
+      background: "#fff"
     },
     dialogContent: {
       width: "450px",
-      padding: theme.spacing(0, 3),
+      padding: theme.spacing(0, 3)
     },
     infoContainer: {
       background: theme.palette.background.default,
       borderRadius: "4px",
       padding: theme.spacing(1, 0, 1, 2),
-      margin: theme.spacing(1, 0, 3, 0),
+      margin: theme.spacing(1, 0, 3, 0)
     },
-    queryField: {},
+    queryField: {}
   });
 
-const entityNameTypes = Object.keys(TriggerType).slice(0, 6).filter(t => t !== "Schedule");
+const entityNameTypes = Object.keys(TriggerType)
+  .slice(0, 6)
+  .filter(t => t !== "Schedule");
 
 const TriggerTypeItems = Object.keys(TriggerType).map(mapSelectItems);
 
 type TriggerToRecordObjType = {
-  [K in TriggerType]?: string
+  [K in TriggerType]?: string;
 };
 
 const TriggerToRecordTypeMap: TriggerToRecordObjType = {
   "Enrolment successful": "Enrolment",
   "Enrolment cancelled": "Enrolment",
   "Class cancelled": "CourseClass",
-  "Class published on web": "CourseClass",
+  "Class published on web": "CourseClass"
 };
 
 interface Props {
@@ -187,7 +189,7 @@ const ScriptsForm = React.memo<Props>(props => {
   const isInternal = useMemo(() => values && values.keyCode && values.keyCode.startsWith("ish."), [values && values.keyCode]);
   const isOriginallyInternal = useMemo(
     () => initialValues && initialValues.keyCode && initialValues.keyCode.startsWith("ish."),
-    [initialValues && initialValues.keyCode],
+    [initialValues && initialValues.keyCode]
   );
   const prevId = usePrevious(values && values.id);
 
@@ -203,15 +205,18 @@ const ScriptsForm = React.memo<Props>(props => {
   const onDialogSave = useCallback(
     ({ keyCode, name }) => {
       setDisableRouteConfirm(true);
-      onCreate({
-        ...values,
-        id: null,
-        keyCode,
-        name,
-      }, viewMode);
+      onCreate(
+        {
+          ...values,
+          id: null,
+          keyCode,
+          name
+        },
+        viewMode
+      );
       onDialogClose();
     },
-    [values, viewMode],
+    [values, viewMode]
   );
 
   const addComponent = async (componentName: ScriptComponentType) => {
@@ -236,9 +241,12 @@ const ScriptsForm = React.memo<Props>(props => {
     onDelete(values.id);
   };
 
-  useEffect(() => () => {
-    dispatch(setScriptComponents([]));
-  }, []);
+  useEffect(
+    () => () => {
+      dispatch(setScriptComponents([]));
+    },
+    []
+  );
 
   useEffect(() => {
     if (disableRouteConfirm && values && values.id !== prevId) {
@@ -249,28 +257,19 @@ const ScriptsForm = React.memo<Props>(props => {
   useEffect(() => {
     if (!dirty && nextLocation) {
       history.push(nextLocation);
-      setNextLocation('');
+      setNextLocation("");
     }
   }, [nextLocation, dirty]);
 
-  const isScheduleTrigger = useMemo(() => Boolean(
-    values
-    && values.trigger
-    && values.trigger.type === "Schedule",
-  ), [
-    values && values.trigger,
-    values && values.trigger && values.trigger.type,
-  ]);
+  const isScheduleTrigger = useMemo(
+    () => Boolean(values && values.trigger && values.trigger.type === "Schedule"),
+    [values && values.trigger, values && values.trigger && values.trigger.type]
+  );
 
-  const isSystemTrigger = useMemo(() => Boolean(
-    values
-    && values.trigger
-    && (isScheduleTrigger || TriggerToRecordTypeMap[values.trigger.type]),
-  ), [
-    values && values.trigger,
-    values && values.trigger && values.trigger.type,
-    isScheduleTrigger,
-  ]);
+  const isSystemTrigger = useMemo(
+    () => Boolean(values && values.trigger && (isScheduleTrigger || TriggerToRecordTypeMap[values.trigger.type])),
+    [values && values.trigger, values && values.trigger && values.trigger.type, isScheduleTrigger]
+  );
 
   const handleSave = useCallback(
     (valuesToSave: Script) => {
@@ -289,7 +288,7 @@ const ScriptsForm = React.memo<Props>(props => {
         onSave(valuesToSave.id, valuesToSave, "PUT", viewMode);
       }
     },
-    [formsState, isNew, isSystemTrigger, values, viewMode],
+    [formsState, isNew, isSystemTrigger, values, viewMode]
   );
 
   const toogleViewMode = () => {
@@ -303,18 +302,10 @@ const ScriptsForm = React.memo<Props>(props => {
   const defaultVariables = useMemo(
     () => [
       { name: "context", type: "Context" },
-      ...(
-        values && values.entity && !isSystemTrigger
-          ? [{ name: "record", type: values.entity }]
-          : []
-      ),
-      ...(
-        isSystemTrigger && !isScheduleTrigger
-          ? [{ name: "record", type: TriggerToRecordTypeMap[values.trigger.type] }]
-          : []
-      ),
+      ...(values && values.entity && !isSystemTrigger ? [{ name: "record", type: values.entity }] : []),
+      ...(isSystemTrigger && !isScheduleTrigger ? [{ name: "record", type: TriggerToRecordTypeMap[values.trigger.type] }] : [])
     ],
-    [values, values && values.trigger, values && values.trigger && values.trigger.type, isSystemTrigger, isScheduleTrigger],
+    [values, values && values.trigger, values && values.trigger && values.trigger.type, isSystemTrigger, isScheduleTrigger]
   );
 
   const enableEntityNameField = entityNameTypes.indexOf(values && values.trigger && values.trigger.type) > -1;
@@ -364,7 +355,7 @@ const ScriptsForm = React.memo<Props>(props => {
                           icon: <DeleteForever />,
                           tooltip: "Delete script",
                           confirmText: "Script component will be deleted permanently",
-                          confirmButtonText: "DELETE",
+                          confirmButtonText: "DELETE"
                         },
                     viewMode === "Cards"
                       ? {
@@ -388,10 +379,7 @@ const ScriptsForm = React.memo<Props>(props => {
                 auditsUrl={getAuditsUrl(values.id)}
               />
 
-              <FormSubmitButton
-                disabled={!dirty || invalid}
-                invalid={invalid}
-              />
+              <FormSubmitButton disabled={!dirty || invalid} invalid={invalid} />
             </Grid>
           </Grid>
         </CustomAppBar>
@@ -423,12 +411,7 @@ const ScriptsForm = React.memo<Props>(props => {
                     expanded
                     noPadding
                   >
-                    <FormField
-                      type="code"
-                      name="content"
-                      disabled={isInternal}
-                      required
-                    />
+                    <FormField type="code" name="content" disabled={isInternal} required />
                   </ScriptCard>
                 ) : (
                   <>
@@ -475,13 +458,7 @@ const ScriptsForm = React.memo<Props>(props => {
 
               <Grid item xs={3} className="pt-3">
                 <div>
-                  <FormField
-                    type="switch"
-                    name="enabled"
-                    label="Enabled"
-                    color="primary"
-                    fullWidth
-                  />
+                  <FormField type="switch" name="enabled" label="Enabled" color="primary" fullWidth />
                 </div>
                 <FormField
                   label="Output"
