@@ -3,23 +3,18 @@
  * No copying or use of this code is allowed without permission in writing from ish.
  */
 
-import React, { useEffect, useState } from "react";
-import { connect } from "react-redux";
-import {
- getFormInitialValues, getFormValues, initialize, reduxForm
-} from "redux-form";
+import React, { useCallback, useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { getFormInitialValues, getFormValues, initialize, reduxForm } from "redux-form";
 import { withRouter } from "react-router";
 import { ScheduleType, Script } from "@api/model";
-import { Dispatch } from "redux";
 import { onSubmitFail } from "../../../../common/utils/highlightFormClassErrors";
 import { State } from "../../../../reducers/state";
 import ScriptsForm from "./containers/ScriptsForm";
-import {
- createScriptItem, deleteScriptItem, getScriptItem, saveScriptItem
-} from "./actions";
+import { createScriptItem, deleteScriptItem, getScriptItem as getScriptItemAction, saveScriptItem } from "./actions";
 import { SCRIPT_EDIT_VIEW_FORM_NAME } from "./constants";
 import { mapSelectItems } from "../../../../common/utils/common";
-import { setNextLocation, showConfirm } from "../../../../common/actions";
+import { setNextLocation as setNextLocationAction, showConfirm } from "../../../../common/actions";
 
 const ScheduleTypeItems = Object.keys(ScheduleType).map(mapSelectItems);
 
@@ -27,21 +22,34 @@ const Initial: Script = { enabled: false, content: "", keyCode: null };
 
 const ScriptsBase = React.memo<any>(props => {
   const {
-    getScriptItem,
-    dispatch,
     history,
-    scripts,
-    emailTemplates,
     pdfReports,
     pdfBackgrounds,
-    timeZone,
     match: {
       params: { id }
     },
     ...rest
   } = props;
 
-  const [isNew, setIsNew] = useState(false);
+  const dispatch = useDispatch();
+
+  const scripts = useSelector((state: State) => state.automation.script.scripts);
+  const getScriptItem = useCallback((id: number) => dispatch(getScriptItemAction(id)), []);
+
+  const values = useSelector((state: State) => getFormValues(SCRIPT_EDIT_VIEW_FORM_NAME)(state));
+  const initialValues = useSelector((state: State) => getFormInitialValues(SCRIPT_EDIT_VIEW_FORM_NAME)(state));
+  const formsState = useSelector((state: State) => state.form);
+  const emailTemplates = useSelector((state: State) => state.automation.emailTemplate.emailTemplates);
+  const nextLocation = useSelector((state: State) => state.nextLocation);
+  const timeZone = useSelector((state: State) => state.automation.timeZone);
+  const onSave = useCallback((id, script, method, viewMode) => dispatch(saveScriptItem(id, script, method, viewMode)), []);
+  const onCreate = useCallback((script, viewMode) => dispatch(createScriptItem(script, viewMode)), []);
+  const onDelete = useCallback((id: number) => dispatch(deleteScriptItem(id)), []);
+  const openConfirm = useCallback(props => dispatch(showConfirm(props)), []);
+  const setNextLocation = useCallback((nextLocation: string) => dispatch(setNextLocationAction(nextLocation)), []);
+  const hasUpdateAccess = true;
+
+  const [isNew, setIsNew] = useState<boolean>(false);
 
   useEffect(() => {
     const newId = id === "new";
@@ -74,32 +82,22 @@ const ScriptsBase = React.memo<any>(props => {
       pdfBackgrounds={pdfBackgrounds}
       history={history}
       timeZone={timeZone}
+      values={values}
+      initialValues={initialValues}
+      formsState={formsState}
+      nextLocation={nextLocation}
+      onSave={onSave}
+      onCreate={onCreate}
+      onDelete={onDelete}
+      openConfirm={openConfirm}
+      setNextLocation={setNextLocation}
+      hasUpdateAccess={hasUpdateAccess}
       {...rest}
     />
   );
 });
 
-const mapStateToProps = (state: State) => ({
-  hasUpdateAccess: true,
-  formsState: state.form,
-  values: getFormValues(SCRIPT_EDIT_VIEW_FORM_NAME)(state),
-  initialValues: getFormInitialValues(SCRIPT_EDIT_VIEW_FORM_NAME)(state),
-  scripts: state.automation.script.scripts,
-  emailTemplates: state.automation.emailTemplate.emailTemplates,
-  nextLocation: state.nextLocation,
-  timeZone: state.automation.timeZone,
-});
-
-const mapDispatchToProps = (dispatch: Dispatch<any>) => ({
-  getScriptItem: (id: number) => dispatch(getScriptItem(id)),
-  onSave: (id, script, method, viewMode) => dispatch(saveScriptItem(id, script, method, viewMode)),
-  onCreate: (script, viewMode) => dispatch(createScriptItem(script, viewMode)),
-  onDelete: (id: number) => dispatch(deleteScriptItem(id)),
-  openConfirm: props => dispatch(showConfirm(props)),
-  setNextLocation: (nextLocation: string) => dispatch(setNextLocation(nextLocation)),
-});
-
 export default reduxForm({
   form: SCRIPT_EDIT_VIEW_FORM_NAME,
   onSubmitFail
-})(connect<any, any, any>(mapStateToProps, mapDispatchToProps)(withRouter(ScriptsBase)));
+})(withRouter(ScriptsBase));

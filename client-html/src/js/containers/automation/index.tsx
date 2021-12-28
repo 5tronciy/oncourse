@@ -7,8 +7,6 @@ const LoadableComponent = Loadable({
   loading: Loading
 });
 
-export default class LoadableScripts extends React.Component {
-  render() {
-    return <LoadableComponent {...this.props} />;
-  }
-}
+const LoadableScripts = props => <LoadableComponent {...props} />;
+
+export default LoadableScripts;

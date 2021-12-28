@@ -3,10 +3,9 @@
  * No copying or use of this code is allowed without permission in writing from ish.
  */
 
-import React, { useEffect, useMemo } from "react";
+import React, { useCallback, useEffect, useMemo } from "react";
 import { isDirty, reset } from "redux-form";
-import { Dispatch } from "redux";
-import { connect } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import Lock from "@mui/icons-material/LockOutlined";
 import { LICENSE_SCRIPTING_KEY, ADMIN_EMAIL_KEY } from "../../constants/Config";
 import { State } from "../../reducers/state";
@@ -14,7 +13,7 @@ import { CommonListFilter } from "../../model/common/sidebar";
 import { SidebarWithSearch } from "../../common/components/layout/sidebar-with-search/SidebarWithSearch";
 import { setSwipeableDrawerDirtyForm } from "../../common/components/layout/swipeable-sidebar/actions";
 import { getUserPreferences } from "../../common/actions";
-import { getColumnsWidth, updateColumnsWidth, getPreferencesByKeys } from "../preferences/actions";
+import { getColumnsWidth, updateColumnsWidth as updateColumnsWidthAction, getPreferencesByKeys } from "../preferences/actions";
 import SideBar from "./components/AutomationSideBar";
 import AutomatiomAppFrame from "./components/AutomationAppFrame";
 import { getIntegrations } from "./actions";
@@ -41,40 +40,20 @@ const filters: CommonListFilter[] = [
   }
 ];
 
-const Automation = React.memo<any>(props => {
-  const {
-    location: {
-      pathname
-    },
-    formName,
-    dirty,
-    onSetSwipeableDrawerDirtyForm
-  } = props;
-
-  const isNew = useMemo(() => {
-    const pathArray = pathname.split("/");
-    return pathArray.length > 3 && pathArray[3] === "new";
-  }, [pathname]);
-
-  useEffect(() => {
-    onSetSwipeableDrawerDirtyForm(dirty || isNew, formName);
-  }, [isNew, dirty, formName]);
-
-  return (
-    <SidebarWithSearch SideBar={SideBar} AppFrame={AutomatiomAppFrame} filters={filters} {...props} />
-  );
-});
-
 const getFormName = form => form && Object.keys(form)[0];
 
-const mapStateToProps = (state: State) => ({
-  leftColumnWidth: state.preferences.columnWidth && state.preferences.columnWidth.automationLeftColumnWidth,
-  formName: getFormName(state.form),
-  dirty: isDirty(getFormName(state.form))(state)
-});
+const Automation = React.memo<any>(props => {
+  const {
+    location: { pathname }
+  } = props;
 
-const mapDispatchToProps = (dispatch: Dispatch<any>) => ({
-  onInit: () => {
+  const dispatch = useDispatch();
+
+  const leftColumnWidth = useSelector((state: State) => state.preferences.columnWidth?.automationLeftColumnWidth);
+  const formName = useSelector((state: State) => getFormName(state.form));
+  const dirty = useSelector((state: State) => isDirty(getFormName(state.form))(state));
+
+  const onInit = useCallback(() => {
     dispatch(getColumnsWidth());
     dispatch(getIntegrations());
     dispatch(getUserPreferences([LICENSE_SCRIPTING_KEY]));
@@ -86,13 +65,37 @@ const mapDispatchToProps = (dispatch: Dispatch<any>) => ({
     dispatch(getAutomationPdfReportsList());
     dispatch(getAutomationPdfBackgroundsList());
     dispatch(getTimeZone());
-  },
-  updateColumnsWidth: (automationLeftColumnWidth: number) => {
-    dispatch(updateColumnsWidth({ automationLeftColumnWidth }));
-  },
-  onSetSwipeableDrawerDirtyForm: (isDirty: boolean, formName: string) => dispatch(
-    setSwipeableDrawerDirtyForm(isDirty, () => dispatch(reset(formName)))
-  )
+  }, []);
+
+  const updateColumnsWidth = useCallback((automationLeftColumnWidth: number) => {
+    dispatch(updateColumnsWidthAction({ automationLeftColumnWidth }));
+  }, []);
+
+  const onSetSwipeableDrawerDirtyForm = useCallback(
+    (isDirty: boolean, formName: string) => dispatch(setSwipeableDrawerDirtyForm(isDirty, () => dispatch(reset(formName)))),
+    []
+  );
+
+  const isNew = useMemo(() => {
+    const pathArray = pathname.split("/");
+    return pathArray.length > 3 && pathArray[3] === "new";
+  }, [pathname]);
+
+  useEffect(() => {
+    onSetSwipeableDrawerDirtyForm(dirty || isNew, formName);
+  }, [isNew, dirty, formName]);
+
+  return (
+    <SidebarWithSearch
+      SideBar={SideBar}
+      AppFrame={AutomatiomAppFrame}
+      filters={filters}
+      leftColumnWidth={leftColumnWidth}
+      updateColumnsWidth={updateColumnsWidth}
+      onInit={onInit}
+      {...props}
+    />
+  );
 });
 
-export default connect<any, any, any>(mapStateToProps, mapDispatchToProps)(Automation);
+export default Automation;
